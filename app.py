@@ -50,33 +50,62 @@ def get_vector_store(text_chunks) -> list:
 
 # Function to create a conversation chain
 def get_conversation_chain(vector_store):
-    llm=ChatOpenAI(),
-    memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
-    conversation_chain = ConversationalRetrievalChain.from_llm(
-        llm=llm,
-        retriever=vector_store.as_retriever(),
-        memory=memory
+    # Initialize a Chat model from OpenAI with a specific setting
+    llm = ChatOpenAI(
+        temperature=0  # Setting the temperature to 0 for deterministic responses
     )
+    # Set up a memory buffer for the conversation history
+    memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
+    # Create a conversation chain that uses the language model and vector store for retrieving information
+    conversation_chain = ConversationalRetrievalChain.from_llm(
+        llm=llm,  # The language model for generating responses
+        retriever=vector_store.as_retriever(),  # The retriever for fetching relevant information
+        memory=memory  # The memory buffer to store conversation history
+    )
+    # Return the conversation chain
     return conversation_chain
     
+# Function to handle user input in a Streamlit app
+def handle_user_input(user_question) -> None:
+    # Get the response from the conversation chain for the user's question
+    response = st.session_state.conversation({'question': user_question})
+    # Update the chat history in the session state
+    st.session_state.chat_history = response['chat_history']
+
+    # Display the conversation in the Streamlit app
+    for i, message in enumerate(st.session_state.chat_history):
+        # Alternate between user and bot messages
+        if i % 2 == 0:
+            st.write(f"**You:** {message}")  # Display user's message
+        else:
+            st.write(f"**Bot:** {message}")  # Display bot's response
 
 # Main function of the app
 def main() -> None:
     # Loading the environment variables
     load_dotenv()
 
-    # Setting up the session state
+    # Setting up the session state for conversation
     if "conversation" not in st.session_state:
         st.session_state.conversation = None
+
+    # Setting up the session state for chat history
+    if "chat_history" not in st.session_state:
+        st.session_state.chat_history = None
 
     # Setting up the page title and icon
     st.set_page_config(page_title="Revature chat bot", page_icon=":robot_face:")
 
     # Adding a main header to the page
-    st.header("Chat with multiple PDFs :books:")
+    st.header("Chat with Revature PDFs Bot :books:")
 
-    # Adding a simple instruction text
-    st.text("Ask a question about your documents:")
+    # Create a text input field in the Streamlit app for user questions
+    user_question = st.text_input("Ask a question about Revature:")
+
+    # Check if the user has entered a question
+    if user_question:
+        # If there is a question, process it using the handle_user_input function
+        handle_user_input(user_question)
 
     # Creating a sidebar for extra options
     with st.sidebar:
