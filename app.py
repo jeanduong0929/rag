@@ -19,9 +19,17 @@ def get_pdf_text(pdf_docs) -> str:
         # Loop through each page in the PDF
         for page in pdf_reader.pages:
             # Extract and append text from each page
-            text += page.extract_text()
+            page_text = page.extract_text()
+            if page_text:  # Check if text was extracted
+                # Replace double newlines with a special marker (e.g., double space or \n)
+                page_text = page_text.replace('\n\n', '\n')
+                # Then replace any remaining single newline characters with a space
+                text += page_text.replace('\n', ' ') + ' '
     # Return the combined text from all PDFs
     return text
+
+
+
 
 # Function to split text into smaller chunks
 def get_text_chunks(raw_text) -> list:
@@ -128,8 +136,9 @@ def main() -> None:
     # Check if the user has entered a question
     if st.session_state.conversation is not None:
         if user_question := st.chat_input("Ask a question"):
-            # If there is a question, process it using the handle_user_input function
-            handle_user_input(user_question)
+            with st.spinner(":hourglass_flowing_sand: Thinking..."):
+                # Handle the user's question
+                handle_user_input(user_question)
 
 
 # Makes sure the app runs when the script is executed
