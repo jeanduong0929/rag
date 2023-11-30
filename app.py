@@ -1,3 +1,4 @@
+from langchain.chains.conversational_retrieval.base import BaseConversationalRetrievalChain
 import streamlit as st
 from dotenv import load_dotenv
 from PyPDF2 import PdfReader
@@ -49,7 +50,7 @@ def get_vector_store(text_chunks) -> list:
     return vector_store
 
 # Function to create a conversation chain
-def get_conversation_chain(vector_store):
+def get_conversation_chain(vector_store) -> BaseConversationalRetrievalChain:
     # Initialize a Chat model from OpenAI with a specific setting
     llm = ChatOpenAI(
         temperature=0  # Setting the temperature to 0 for deterministic responses
@@ -101,11 +102,6 @@ def main() -> None:
     # Adding a main header to the page
     st.header("Chat with Revature PDFs Bot :books:")
 
-    # Check if the user has entered a question
-    if user_question := st.chat_input("Ask a question"):
-        # If there is a question, process it using the handle_user_input function
-        handle_user_input(user_question)
-
     # Creating a sidebar for extra options
     with st.sidebar:
         # Adding a section title in the sidebar
@@ -128,6 +124,13 @@ def main() -> None:
 
                 # Create conversation chain
                 st.session_state.conversation = get_conversation_chain(vector_store)
+
+    # Check if the user has entered a question
+    if st.session_state.conversation is not None:
+        if user_question := st.chat_input("Ask a question"):
+            # If there is a question, process it using the handle_user_input function
+            handle_user_input(user_question)
+
 
 # Makes sure the app runs when the script is executed
 if __name__ == '__main__':
