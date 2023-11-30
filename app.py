@@ -76,9 +76,11 @@ def handle_user_input(user_question) -> None:
     for i, message in enumerate(st.session_state.chat_history):
         # Alternate between user and bot messages
         if i % 2 == 0:
-            st.write(f"**You:** {message}")  # Display user's message
+            with st.chat_message("user"):
+                st.markdown(message)  # Display user's message
         else:
-            st.write(f"**Bot:** {message}")  # Display bot's response
+            with st.chat_message("assistant"):
+                st.markdown(message)
 
 # Main function of the app
 def main() -> None:
@@ -99,11 +101,8 @@ def main() -> None:
     # Adding a main header to the page
     st.header("Chat with Revature PDFs Bot :books:")
 
-    # Create a text input field in the Streamlit app for user questions
-    user_question = st.text_input("Ask a question about Revature:")
-
     # Check if the user has entered a question
-    if user_question:
+    if user_question := st.chat_input("Ask a question"):
         # If there is a question, process it using the handle_user_input function
         handle_user_input(user_question)
 
