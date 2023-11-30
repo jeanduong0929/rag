@@ -4,6 +4,9 @@ from PyPDF2 import PdfReader
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import FAISS
+from langchain.memory import ConversationBufferMemory
+from langchain.chains import ConversationalRetrievalChain
+from langchain.chat_models import ChatOpenAI
 
 # Function to extract text from PDF documents
 def get_pdf_text(pdf_docs) -> str:
@@ -39,17 +42,32 @@ def get_vector_store(text_chunks) -> list:
     embeddings = OpenAIEmbeddings()
     # Create a vector store using FAISS (Fast Approximate Nearest Neighbor Search)
     # It converts the text chunks into vector representations using the embeddings
-    vector_store = FAISS.from_texts(texts=text_chunks, embedding=embeddings)
+    vector_store = FAISS.from_texts(
+        texts=text_chunks, embedding=embeddings
+    )
     # Return the vector store
     return vector_store
 
-
+# Function to create a conversation chain
+def get_conversation_chain(vector_store):
+    llm=ChatOpenAI(),
+    memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
+    conversation_chain = ConversationalRetrievalChain.from_llm(
+        llm=llm,
+        retriever=vector_store.as_retriever(),
+        memory=memory
+    )
+    return conversation_chain
     
 
 # Main function of the app
 def main() -> None:
     # Loading the environment variables
     load_dotenv()
+
+    # Setting up the session state
+    if "conversation" not in st.session_state:
+        st.session_state.conversation = None
 
     # Setting up the page title and icon
     st.set_page_config(page_title="Revature chat bot", page_icon=":robot_face:")
@@ -79,6 +97,9 @@ def main() -> None:
 
                 # Create vector store
                 vector_store = get_vector_store(text_chunks)
+
+                # Create conversation chain
+                st.session_state.conversation = get_conversation_chain(vector_store)
 
 # Makes sure the app runs when the script is executed
 if __name__ == '__main__':
